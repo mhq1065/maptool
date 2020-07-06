@@ -1,43 +1,89 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <a-button type="primary">Button></a-button>
-    <div id="main" style="width: 600px;height:400px;"></div>
+    <!-- <a-button type="primary" @click="drawMap">Load</a-button> -->
+    <div id="main" style="width: 600px;height:600px;margin:0 auto"></div>
+    <button @click="drawMap">update</button>
+    <table>
+      <tr>
+        <th>Area</th>
+        <th>Value</th>
+        <th>alias</th>
+      </tr>
+      <tr v-for="(item, index) in option.series[0].data" :key="index">
+        <td>{{ item.name }}</td>
+        <td><input type="number" v-model.number="item.value" /></td>
+        <td>a</td>
+      </tr>
+    </table>
   </div>
 </template>
 
 <script>
+  var china = require("./assets/100000_full.json");
+
   export default {
     name: "App",
     data() {
       return {
         myChart: {},
+        mapdata: {},
         option: {
-          title: { text: "在Vue中使用echarts" },
+          title: { text: "地图" },
           tooltip: {},
-          xAxis: {
-            data: ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"],
+          toolbox: {
+            show: true,
+            orient: "vertical",
+            left: "right",
+            top: "center",
+            feature: {
+              dataView: { readOnly: false },
+              restore: {},
+              saveAsImage: {},
+            },
           },
-          yAxis: {},
+          visualMap: {
+            min: 800,
+            max: 50000,
+            text: ["High", "Low"],
+            realtime: false,
+            calculable: true,
+            inRange: {
+              color: ["lightskyblue", "yellow", "orangered"],
+            },
+          },
           series: [
             {
-              name: "销量",
-              type: "bar",
-              data: [5, 20, 36, 10, 10, 20],
+              name: "CHINA",
+              type: "map",
+              mapType: "CHINA",
+              data: [],
             },
           ],
         },
       };
     },
     mounted() {
+      this.loadMap();
       this.myChart = this.$echarts.init(document.getElementById("main"));
-      this.drawChart();
+      this.drawMap();
     },
     methods: {
-      drawChart() {
-        console.log('draw charts')
+      drawMap() {
+        console.log("draw charts");
+        console.log(this.option);
+        // this.option.series[0].data = this.mapdata;
         // 使用刚指定的配置项和数据显示图表。
         this.myChart.setOption(this.option);
+      },
+      loadMap() {
+        // this.$axios.get("/api/areas_v2/bound/100000.json");
+        this.$echarts.registerMap("CHINA", china);
+        this.option.series[0].data = this.$echarts
+          .getMap("CHINA")
+          .geoJson.features.map((i) => {
+            return { name: i.properties.name, value: 0 };
+          });
+        console.log(this.option.series[0].data);
       },
     },
   };
